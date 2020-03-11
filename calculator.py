@@ -1,3 +1,5 @@
+import traceback
+from functools import reduce
 """
 For your homework this week, you'll be creating a wsgi application of
 your own.
@@ -42,43 +44,119 @@ To submit your homework:
 """
 
 
+def divide(*args):
+    """
+    Returns a STRING with the division of the arguments
+    :param args:
+    :return:
+    """
+    nums = [int(num) for num in args]
+    return nums[0]/nums[1]
+
+
+def multiply(*args):
+    """
+    Returns a STRING with the multiplication of the arguments
+    :param args:
+    :return str:
+    """
+    nums = [int(num) for num in args]
+    return nums[0] * nums[1]
+
+
+def subtract(*args):
+    """
+    Returns a STRING with the subtraction of the arguments
+    :param args:
+    :return str: subtraction of args
+    """
+    # try:
+    #     inputs = [int(num) for num in args[:]]
+    #     return str(inputs[0] + -1*sum(inputs[1:]))
+    # except ValueError:
+    #     return 'Not possible bud'
+    # # ans = int(args[0])
+    # # # ans = [arg[0] -= num for num in args[1:]]
+    # # for num in args[1:]:
+    # #     ans -= int(num)
+    nums = [int(num) for num in args]
+    return nums[0] - nums[1]
+
+
 def add(*args):
-    """ Returns a STRING with the sum of the arguments """
+    """
+    Returns a STRING with the sum of the arguments
+    :param args:
+    :return str: subtraction of args
+    """
+    # try:
+    #     inputs = [int(num) for num in args]
+    #     return str(sum(inputs))
+    # except ValueError:
+    #     return 'Not possible bud'
+    nums = [int(num) for num in args]
+    return nums[0] + nums[1]
 
-    # TODO: Fill sum with the correct value, based on the
-    # args provided.
-    sum = "0"
-
-    return sum
-
-# TODO: Add functions for handling more arithmetic operations.
 
 def resolve_path(path):
     """
     Should return two values: a callable and an iterable of
     arguments.
+    :param path:
+    :return :
     """
+    funcs = {'add': add,
+             'subtract': subtract,
+             'multiply': multiply,
+             'divide': divide}
 
-    # TODO: Provide correct values for func and args. The
-    # examples provide the correct *syntax*, but you should
-    # determine the actual values of func and args using the
-    # path.
-    func = add
-    args = ['25', '32']
+    path = path.strip('/').strip('/')
+    func_name = path[0]
+    args = path[1:]
+
+    try:
+        func = funcs[func_name]
+    except KeyError:
+        raise NameError
 
     return func, args
 
+
 def application(environ, start_response):
-    # TODO: Your application code from the book database
-    # work here as well! Remember that your application must
-    # invoke start_response(status, headers) and also return
-    # the body of the response in BYTE encoding.
-    #
-    # TODO (bonus): Add error handling for a user attempting
-    # to divide by zero.
-    pass
+    """
+
+    :param environ:
+    :param start_response:
+    :return:
+    """
+
+    headers = [('Content-type', 'text/html')]
+
+    try:
+        path = environ.get('PATH_INFO', None)
+        if path is None:
+            raise NameError
+        func, args = resolve_path(path=path)
+        body = reduce(func, *args)
+        # body = func(*args)
+        status = "200 OK"
+    except NameError:
+        status = "404 Not Found"
+        body = "<h1>Not Found</h1>"
+    except ZeroDivisionError:
+        status = "200 OK"
+        body = "Warning can't divide by zero!!"
+    except Exception:
+        status = "500 Internal Server Error"
+        body = "<h1>Internal Server Error</h1>"
+        print(traceback.format_exc())
+    finally:
+        headers.append(('Content-Length', str(len(body))))
+        start_response(status, headers)
+        return body.encode('utf')
+
 
 if __name__ == '__main__':
-    # TODO: Insert the same boilerplate wsgiref simple
-    # server creation that you used in the book database.
-    pass
+    from wsgiref.simple_server import make_server
+    srv = make_server('127.0.0.1', 8080, application)
+    srv.serve_forever()
