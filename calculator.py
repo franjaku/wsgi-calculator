@@ -108,7 +108,8 @@ def resolve_path(path):
     funcs = {'add': add,
              'subtract': subtract,
              'multiply': multiply,
-             'divide': divide}
+             'divide': divide,
+             '': 'root'}
 
     path = path.strip('/').split('/')
     func_name = path[0]
@@ -121,6 +122,27 @@ def resolve_path(path):
         raise NameError
 
     return func, args
+
+
+def root():
+    body = """
+    <h1>Instructions</h1>
+    <p>
+    You can add, subtract, multiply or divide any amount of numbers as follows.\n\n
+    
+    /operation/num1/num2/num3\n\n
+    
+    where operation is one of the options above and numX is any integer. Only positive non-zero\n
+    integers are allowed.
+    </p>
+    <ul>
+      <li>http://localhost:8080/add/23/42      => 65</li>
+      <li>http://localhost:8080/subtract/23/42 => -19</li>
+      <li>http://localhost:8080/multiply/3/5   => 15</li>
+      <li>http://localhost:8080/divide/22/11   => 2</li>
+    </ul>
+    """
+    return body
 
 
 def application(environ, start_response):
@@ -137,9 +159,13 @@ def application(environ, start_response):
         path = environ.get('PATH_INFO', None)
         if path is None:
             raise NameError
-        func, args = resolve_path(path=path)
-        body = str(reduce(func, args))
-        # body = func(*args)
+        elif path == '/':
+            print('Path in application func: {}'.format(path))
+            body = root()
+        else:
+            func, args = resolve_path(path=path)
+            body = str(reduce(func, args))
+            # body = func(*args)
         status = "200 OK"
     except NameError:
         status = "404 Not Found"
