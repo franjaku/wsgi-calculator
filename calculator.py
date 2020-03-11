@@ -110,10 +110,11 @@ def resolve_path(path):
              'multiply': multiply,
              'divide': divide}
 
-    path = path.strip('/').strip('/')
+    path = path.strip('/').split('/')
     func_name = path[0]
     args = path[1:]
-
+    print(func_name)
+    print(args)
     try:
         func = funcs[func_name]
     except KeyError:
@@ -153,7 +154,7 @@ def application(environ, start_response):
     finally:
         headers.append(('Content-Length', str(len(body))))
         start_response(status, headers)
-        return body.encode('utf')
+        return [body.encode('utf')]
 
 
 if __name__ == '__main__':
