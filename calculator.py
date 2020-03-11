@@ -138,7 +138,7 @@ def application(environ, start_response):
         if path is None:
             raise NameError
         func, args = resolve_path(path=path)
-        body = reduce(func, *args)
+        body = str(reduce(func, args))
         # body = func(*args)
         status = "200 OK"
     except NameError:
